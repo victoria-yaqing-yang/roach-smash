@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Roach Smash: You vs Mom</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Nunito:wght@600;800&display=swap">
+<style>
+:root{
+  --tile-a:#2f7f78; --tile-b:#2a726c; --grout:#1d524e;
+  --ink:#fff7d6; --lamp:#ffd23f; --splat:#7a2e12; --btn:#ff5a36; --btn-ink:#fff; --mom:#ff9ec4;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;height:100%;background:var(--grout);color:var(--ink);
+  font-family:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+  overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation;
+}
+#app{position:relative;height:100%;display:flex;flex-direction:column}
+header{
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+  padding:10px 14px;background:rgba(0,0,0,.28);z-index:5;
+}
+.stat{display:flex;flex-direction:column;line-height:1.05}
+.stat small{font-size:12px;font-weight:800;opacity:.85}
+.stat b{font-family:'Bowlby One',Impact,sans-serif;font-size:26px;font-weight:400;color:var(--lamp)}
+.stat.mid{text-align:center}
+.stat.right{text-align:right}
+.stat.right b{color:var(--mom)}
+#app{background:var(--grout)}
+#app.kitchen{
+  --grout:#1d524e;
+  --floor:
+    linear-gradient(#1d524e 2px,transparent 2px) 0 0/64px 64px,
+    linear-gradient(90deg,#1d524e 2px,transparent 2px) 0 0/64px 64px,
+    repeating-conic-gradient(#2f7f78 0 25%,#2a726c 0 50%) 0 0/128px 128px;
+}
+#app.bedroom{
+  --grout:#3a2216;
+  --floor:
+    repeating-linear-gradient(90deg,transparent 0 118px,rgba(40,20,10,.55) 118px 120px),
+    repeating-linear-gradient(0deg,#8c5c3c 0 40px,#7f5236 40px 80px,#94653f 80px 120px,#85573a 120px 160px);
+}
+#arena{
+  position:relative;flex:1;overflow:hidden;
+  background:var(--floor);
+  cursor:none;
+}
+#decor{position:absolute;inset:0;pointer-events:none;z-index:1}
+#decor .d{position:absolute;line-height:1;filter:drop-shadow(2px 4px 2px rgba(0,0,0,.35))}
+#decor .rug{
+  position:absolute;left:28%;top:34%;width:44%;height:36%;border-radius:18px;
+  background:repeating-linear-gradient(90deg,#5b4b8a 0 18px,#6d5ca0 18px 36px);
+  border:6px solid #3e3262;opacity:.9;
+}
+.roach{z-index:3}
+.splat,.pop{z-index:4}
+.roach{
+  position:absolute;left:0;top:0;font-size:44px;line-height:1;
+  will-change:transform;padding:8px;margin:-8px;
+  filter:drop-shadow(2px 4px 2px rgba(0,0,0,.4));
+}
+.splat{
+  position:absolute;font-size:44px;line-height:1;pointer-events:none;
+  animation:splat 1.8s ease-out forwards;
+}
+.splat i{
+  position:absolute;left:50%;top:50%;width:46px;height:34px;margin:-17px 0 0 -23px;
+  background:var(--splat);border-radius:58% 42% 55% 45% / 48% 60% 40% 52%;opacity:.8;
+}
+.splat.m i{background:#8a3a4f}
+.splat span{position:relative;display:block;transform:scale(1,.45)}
+@keyframes splat{
+  0%{transform:scale(1.7);opacity:1}
+  15%{transform:scale(1)}
+  70%{opacity:.9}
+  100%{opacity:0}
+}
+.pop{
+  position:absolute;pointer-events:none;font-family:'Bowlby One',Impact,sans-serif;
+  color:var(--lamp);font-size:22px;text-shadow:0 2px 0 #000;white-space:nowrap;
+  animation:pop .8s ease-out forwards;
+}
+.pop.m{color:var(--mom)}
+@keyframes pop{from{transform:translateY(0);opacity:1}to{transform:translateY(-44px);opacity:0}}
+.shake{animation:shake .15s}
+@keyframes shake{25%{transform:translate(-3px,2px)}75%{transform:translate(3px,-2px)}}
+
+/* player weapon cursor */
+#weapon{position:absolute;left:0;top:0;pointer-events:none;z-index:8;display:none;will-change:transform}
+#weapon span{display:block;font-size:56px;line-height:1;transform:translate(-50%,-50%) rotate(-25deg);
+  filter:drop-shadow(3px 5px 3px rgba(0,0,0,.45));transform-origin:50% 50%}
+#weapon.whack span{animation:whack .22s ease-out}
+@keyframes whack{
+  0%{transform:translate(-50%,-50%) rotate(-25deg) scale(1)}
+  35%{transform:translate(-50%,-50%) rotate(20deg) scale(1.35)}
+  100%{transform:translate(-50%,-50%) rotate(-25deg) scale(1)}
+}
+
+/* mom */
+#mom{position:absolute;left:0;top:0;z-index:6;will-change:transform;pointer-events:none;width:0;height:0}
+#mom .body{position:absolute;left:-30px;top:-34px;font-size:60px;line-height:1;filter:drop-shadow(2px 5px 3px rgba(0,0,0,.4))}
+#mom .tag{
+  position:absolute;left:-26px;top:30px;background:var(--mom);color:#4a1630;
+  font-family:'Bowlby One',Impact,sans-serif;font-size:12px;padding:2px 8px;border-radius:10px;
+}
+#mom .shoe{position:absolute;left:18px;top:-30px;font-size:34px;line-height:1;transform-origin:20% 90%;transform:rotate(-30deg)}
+#mom.whack .shoe{animation:momwhack .25s ease-out}
+@keyframes momwhack{0%{transform:rotate(-30deg)}40%{transform:rotate(55deg) scale(1.4)}100%{transform:rotate(-30deg)}}
+#mom .say{
+  position:absolute;left:-10px;top:-76px;background:#fff;color:#3b1226;font-weight:800;font-size:14px;
+  padding:5px 10px;border-radius:12px;white-space:nowrap;opacity:0;transition:opacity .15s;
+}
+#mom .say.on{opacity:1}
+
+#overlay{
+  position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
+  background:rgba(12,40,38,.86);padding:16px;overflow:auto;
+}
+#card{
+  max-width:440px;width:100%;text-align:center;
+  background:#173f3c;border:3px solid var(--lamp);border-radius:22px;padding:22px 20px;
+  box-shadow:0 10px 0 rgba(0,0,0,.35);cursor:default;
+}
+#card h1{
+  font-family:'Bowlby One',Impact,sans-serif;font-weight:400;font-size:32px;line-height:1.05;
+  margin:0 0 8px;color:var(--lamp);
+}
+#card p{margin:0 0 14px;font-size:17px;font-weight:600;line-height:1.35}
+#card .vs{display:flex;justify-content:center;gap:18px;align-items:flex-end;margin:4px 0 8px}
+#card .big{font-family:'Bowlby One',Impact,sans-serif;font-size:54px;line-height:1;color:var(--lamp)}
+#card .big.m{color:var(--mom)}
+#card .vs small{display:block;font-weight:800;font-size:13px;opacity:.85}
+#card .dash{font-family:'Bowlby One',Impact,sans-serif;font-size:30px;opacity:.6;padding-bottom:6px}
+.pick-label{font-weight:800;font-size:14px;margin:6px 0 8px;opacity:.9}
+#picks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+#rooms{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.pick{
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:var(--ink);
+  background:#0f2e2c;border:2px solid transparent;border-radius:14px;padding:8px 4px;cursor:pointer;
+  box-shadow:none;display:flex;flex-direction:column;align-items:center;gap:2px;
+}
+.pick .e{font-size:34px;line-height:1.1}
+.pick[aria-pressed="true"]{border-color:var(--lamp);background:#25524e}
+.pick:active{transform:none;box-shadow:none}
+button.go{
+  font-family:'Bowlby One',Impact,sans-serif;font-size:20px;background:var(--btn);color:var(--btn-ink);
+  border:0;border-radius:14px;padding:14px 26px;cursor:pointer;box-shadow:0 5px 0 #a8321b;
+}
+button.go:active{transform:translateY(4px);box-shadow:0 1px 0 #a8321b}
+button:focus-visible{outline:3px solid var(--lamp);outline-offset:3px}
+.hint{font-size:14px;opacity:.8;margin-top:14px}
+@media (prefers-reduced-motion:reduce){.splat,.pop,.shake,#weapon.whack span,#mom.whack .shoe{animation-duration:.01s}}
+</style>
+</head>
+<body>
+<div id="app" class="kitchen">
+  <header>
+    <div class="stat"><small>You</small><b id="score">0</b></div>
+    <div class="stat mid"><small>Time</small><b id="time">30</b></div>
+    <div class="stat right"><small>Mom</small><b id="momScore">0</b></div>
+  </header>
+
+  <div id="arena" aria-label="Floor">
+    <div id="decor"></div>
+    <div id="mom">
+      <div class="say" id="say"></div>
+      <div class="body">&#128105;</div>
+      <div class="shoe" id="momShoe">&#129423;</div>
+      <div class="tag">MOM</div>
+    </div>
+    <div id="weapon"><span id="weaponEmoji"></span></div>
+  </div>
+
+  <div id="overlay">
+    <div id="card">
+      <h1 id="title">Roach Smash</h1>
+      <div id="msg"><p>You and Mom, one house, 30 seconds a room. Whoever smashes the most roaches wins.</p></div>
+      <div class="pick-label">Pick a room</div>
+      <div id="rooms"></div>
+      <div class="pick-label">Pick your weapon</div>
+      <div id="picks"></div>
+      <button class="go" id="go">Start smashing</button>
+      <div class="hint" id="hint">Series: You 0, Mom 0</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var ROUND = 30;
+  var WEAPONS = [
+    {e:'\uD83E\uDD7F', n:'Slipper'},
+    {e:'\uD83D\uDC5F', n:'Sneaker'},
+    {e:'\uD83E\uDE74', n:'Flip-flop'},
+    {e:'\uD83D\uDCF0', n:'Newspaper'},
+    {e:'\uD83C\uDF73', n:'Frying pan'},
+    {e:'\uD83D\uDC60', n:'High heel'}
+  ];
+  var ROOMS = [
+    {id:'kitchen', n:'Kitchen', e:'\uD83C\uDF74', rs:1, spawn:1, mom:175, decor:[
+      {e:'\uD83C\uDF55',x:12,y:70,s:34},{e:'\uD83C\uDF5E',x:78,y:26,s:34},{e:'\uD83C\uDF6A',x:58,y:82,s:30},
+      {e:'\uD83E\uDD6B',x:26,y:18,s:36},{e:'\uD83D\uDEB0',x:86,y:8,s:70},{e:'\uD83E\uDE91',x:6,y:44,s:76}]},
+    {id:'bedroom', n:'Bedroom', e:'\uD83D\uDECF\uFE0F', rs:1.2, spawn:1.1, mom:165, rug:true, decor:[
+      {e:'\uD83D\uDECF\uFE0F',x:6,y:6,s:120},{e:'\uD83E\uDDE6',x:70,y:72,s:34},{e:'\uD83C\uDF55',x:82,y:38,s:30},
+      {e:'\uD83D\uDC55',x:42,y:82,s:40},{e:'\uD83E\uDEB4',x:88,y:8,s:70}]}
+  ];
+  var MOM_LINES_HIT = ['Got one!','Too slow, honey!','Mom has done this before.','Eat shoe!','That is how you do it.','Gotcha!'];
+  var MOM_LINES_IDLE = ['Come here, you!','Not in my kitchen!','Watch and learn.','Hold still!'];
+
+  var arena = document.getElementById('arena');
+  var scoreEl = document.getElementById('score');
+  var momScoreEl = document.getElementById('momScore');
+  var timeEl = document.getElementById('time');
+  var overlay = document.getElementById('overlay');
+  var titleEl = document.getElementById('title');
+  var msgEl = document.getElementById('msg');
+  var hintEl = document.getElementById('hint');
+  var goBtn = document.getElementById('go');
+  var weaponEl = document.getElementById('weapon');
+  var weaponEmoji = document.getElementById('weaponEmoji');
+  var momEl = document.getElementById('mom');
+  var sayEl = document.getElementById('say');
+  var picksEl = document.getElementById('picks');
+  var roomsEl = document.getElementById('rooms');
+  var decorEl = document.getElementById('decor');
+  var appEl = document.getElementById('app');
+
+  var roaches = [], score = 0, momScore = 0, timeLeft = ROUND;
+  var seriesYou = 0, seriesMom = 0;
+  var running = false, lastT = 0, spawnAcc = 0, raf = 0;
+  var chosen = 0, roomIdx = 0;
+  var mom = {x:0,y:0,target:null,retarget:0,cool:0,windup:0,sayT:0};
+
+  function rand(a,b){ return a + Math.random()*(b-a); }
+  function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+  // weapon picker
+  WEAPONS.forEach(function(w,i){
+    var b = document.createElement('button');
+    b.className = 'pick';
+    b.type = 'button';
+    b.setAttribute('aria-pressed', i===chosen ? 'true' : 'false');
+    b.innerHTML = '<span class="e">'+w.e+'</span><span>'+w.n+'</span>';
+    b.addEventListener('click', function(){
+      chosen = i;
+      Array.prototype.forEach.call(picksEl.children, function(c,j){
+        c.setAttribute('aria-pressed', j===i ? 'true' : 'false');
+      });
+    });
+    picksEl.appendChild(b);
+  });
+
+  function applyRoom(){
+    var rm = ROOMS[roomIdx];
+    appEl.className = rm.id;
+    goBtn.textContent = 'Play ' + rm.n;
+    decorEl.innerHTML = '';
+    if(rm.rug){ var rg = document.createElement('div'); rg.className = 'rug'; decorEl.appendChild(rg); }
+    rm.decor.forEach(function(d){
+      var el = document.createElement('div');
+      el.className = 'd';
+      el.textContent = d.e;
+      el.style.left = d.x+'%'; el.style.top = d.y+'%'; el.style.fontSize = d.s+'px';
+      decorEl.appendChild(el);
+    });
+  }
+  ROOMS.forEach(function(rm,i){
+    var b = document.createElement('button');
+    b.className = 'pick';
+    b.type = 'button';
+    b.setAttribute('aria-pressed', i===roomIdx ? 'true' : 'false');
+    b.innerHTML = '<span class="e">'+rm.e+'</span><span>'+rm.n+'</span>';
+    b.addEventListener('click', function(){
+      roomIdx = i;
+      Array.prototype.forEach.call(roomsEl.children, function(c,j){
+        c.setAttribute('aria-pressed', j===i ? 'true' : 'false');
+      });
+      applyRoom();
+    });
+    roomsEl.appendChild(b);
+  });
+  applyRoom();
+
+  function spawn(){
+    var w = arena.clientWidth, h = arena.clientHeight;
+    var el = document.createElement('div');
+    el.className = 'roach';
+    el.textContent = '\uD83E\uDEB3';
+    var edge = Math.floor(rand(0,4)), x, y;
+    if(edge===0){ x = rand(0,w); y = -40; }
+    else if(edge===1){ x = w+10; y = rand(0,h); }
+    else if(edge===2){ x = rand(0,w); y = h+10; }
+    else { x = -40; y = rand(0,h); }
+    var tx = rand(w*0.2,w*0.8), ty = rand(h*0.2,h*0.8);
+    var ang = Math.atan2(ty-y, tx-x);
+    var elapsed = ROUND - timeLeft;
+    var speed = rand(100,170)*ROOMS[roomIdx].rs + elapsed*4;
+    var r = { el:el, x:x, y:y, vx:Math.cos(ang)*speed, vy:Math.sin(ang)*speed, wob:rand(0,6.28), alive:true, age:0 };
+    el.addEventListener('pointerdown', function(e){
+      e.preventDefault(); e.stopPropagation();
+      moveWeapon(e);
+      whackWeapon();
+      kill(r, 'you');
+    });
+    arena.appendChild(el);
+    roaches.push(r);
+  }
+
+  function kill(r, who){
+    if(!r.alive || !running) return;
+    r.alive = false;
+    r.el.remove();
+    var x = r.x + 22, y = r.y + 22;
+    var s = document.createElement('div');
+    s.className = 'splat' + (who==='mom' ? ' m' : '');
+    s.style.left = (x-22)+'px'; s.style.top = (y-22)+'px';
+    s.innerHTML = '<i></i><span>\uD83D\uDCA5</span>';
+    arena.appendChild(s);
+    setTimeout(function(){ s.remove(); }, 1900);
+
+    var p = document.createElement('div');
+    p.className = 'pop' + (who==='mom' ? ' m' : '');
+    if(who==='you'){
+      score++; scoreEl.textContent = score;
+      p.textContent = pick(['SPLAT!','GOT IT!','+1','CRUNCH!','NICE!']);
+      arena.classList.remove('shake'); void arena.offsetWidth; arena.classList.add('shake');
+    } else {
+      momScore++; momScoreEl.textContent = momScore;
+      p.textContent = 'MOM +1';
+    }
+    p.style.left = Math.max(4, Math.min(arena.clientWidth-120, x-30))+'px';
+    p.style.top = (y-30)+'px';
+    arena.appendChild(p);
+    setTimeout(function(){ p.remove(); }, 850);
+  }
+
+  // weapon cursor
+  function moveWeapon(e){
+    var rect = arena.getBoundingClientRect();
+    weaponEl.style.display = 'block';
+    weaponEl.style.transform = 'translate('+(e.clientX-rect.left)+'px,'+(e.clientY-rect.top)+'px)';
+  }
+  function whackWeapon(){
+    weaponEl.classList.remove('whack'); void weaponEl.offsetWidth; weaponEl.classList.add('whack');
+  }
+  arena.addEventListener('pointermove', function(e){ if(running) moveWeapon(e); });
+  arena.addEventListener('pointerdown', function(e){
+    if(!running) return;
+    moveWeapon(e);
+    whackWeapon();
+    var rect = arena.getBoundingClientRect();
+    var d = document.createElement('div');
+    d.className = 'pop';
+    d.style.fontSize = '15px';
+    d.style.color = '#fff7d6';
+    d.textContent = 'miss';
+    d.style.left = (e.clientX-rect.left-14)+'px';
+    d.style.top = (e.clientY-rect.top-34)+'px';
+    arena.appendChild(d);
+    setTimeout(function(){ d.remove(); }, 850);
+  });
+
+  // mom speech
+  function momSay(text){
+    sayEl.textContent = text;
+    sayEl.classList.add('on');
+    mom.sayT = 1.1;
+  }
+
+  function nearestRoach(){
+    var best = null, bd = 1e9;
+    for(var i=0;i<roaches.length;i++){
+      var r = roaches[i];
+      if(!r.alive) continue;
+      var d = Math.hypot((r.x+22)-mom.x, (r.y+22)-mom.y);
+      if(d < bd){ bd = d; best = r; }
+    }
+    return best;
+  }
+
+  function updateMom(dt){
+    var elapsed = ROUND - timeLeft;
+    mom.retarget -= dt; mom.cool -= dt;
+    if(mom.sayT > 0){ mom.sayT -= dt; if(mom.sayT <= 0) sayEl.classList.remove('on'); }
+    if(!mom.target || !mom.target.alive || mom.retarget <= 0){
+      mom.target = nearestRoach();
+      mom.retarget = rand(0.4,0.9);
+      if(mom.target && Math.random() < 0.08 && mom.sayT <= 0) momSay(pick(MOM_LINES_IDLE));
+    }
+    if(mom.target && mom.cool <= 0){
+      var tx = mom.target.x + 22, ty = mom.target.y + 22;
+      var dx = tx - mom.x, dy = ty - mom.y;
+      var d = Math.hypot(dx,dy);
+      var speed = ROOMS[roomIdx].mom + elapsed*2.5;
+      if(d > 30){
+        mom.x += dx/d * Math.min(d, speed*dt);
+        mom.y += dy/d * Math.min(d, speed*dt);
+      } else {
+        // swing
+        momEl.classList.remove('whack'); void momEl.offsetWidth; momEl.classList.add('whack');
+        // small chance she whiffs
+        if(Math.random() < 0.82){
+          kill(mom.target, 'mom');
+          if(Math.random() < 0.4) momSay(pick(MOM_LINES_HIT));
+        } else {
+          momSay('Hmph! Missed.');
+        }
+        mom.target = null;
+        mom.cool = rand(0.35,0.6);
+      }
+    }
+    momEl.style.transform = 'translate('+mom.x+'px,'+mom.y+'px)';
+  }
+
+  function frame(t){
+    if(!running) return;
+    var dt = Math.min(0.05, (t-lastT)/1000); lastT = t;
+    var prevSec = Math.ceil(timeLeft);
+    timeLeft -= dt;
+    if(timeLeft <= 0){ timeLeft = 0; timeEl.textContent = 0; return end(); }
+    if(Math.ceil(timeLeft) !== prevSec) timeEl.textContent = Math.ceil(timeLeft);
+
+    var elapsed = ROUND - timeLeft;
+    var rate = (2.2 + elapsed*0.12) * ROOMS[roomIdx].spawn;
+    spawnAcc += dt*rate;
+    while(spawnAcc >= 1){ spawnAcc -= 1; if(roaches.length < 26) spawn(); }
+
+    var w = arena.clientWidth, h = arena.clientHeight;
+    for(var i=roaches.length-1; i>=0; i--){
+      var r = roaches[i];
+      if(!r.alive){ roaches.splice(i,1); continue; }
+      r.age += dt;
+      r.wob += dt*9;
+      var jitter = Math.sin(r.wob)*0.9;
+      var sp = Math.hypot(r.vx,r.vy);
+      var a = Math.atan2(r.vy,r.vx) + jitter*dt*2.2;
+      r.vx = Math.cos(a)*sp; r.vy = Math.sin(a)*sp;
+      r.x += r.vx*dt; r.y += r.vy*dt;
+      if(r.age > 0.8){
+        if(r.x < 10){ r.x = 10; r.vx = Math.abs(r.vx); }
+        if(r.x > w-30){ r.x = w-30; r.vx = -Math.abs(r.vx); }
+        if(r.y < 10){ r.y = 10; r.vy = Math.abs(r.vy); }
+        if(r.y > h-30){ r.y = h-30; r.vy = -Math.abs(r.vy); }
+      }
+      var rot = Math.atan2(r.vy,r.vx)*180/Math.PI + 90;
+      r.el.style.transform = 'translate('+r.x+'px,'+r.y+'px) rotate('+rot+'deg)';
+    }
+    updateMom(dt);
+    raf = requestAnimationFrame(frame);
+  }
+
+  function clearAll(){
+    roaches.forEach(function(r){ r.el.remove(); });
+    roaches = [];
+    Array.prototype.slice.call(arena.querySelectorAll('.splat,.pop')).forEach(function(n){ n.remove(); });
+  }
+
+  function start(){
+    clearAll();
+    score = 0; momScore = 0; timeLeft = ROUND; spawnAcc = 0;
+    scoreEl.textContent = 0; momScoreEl.textContent = 0; timeEl.textContent = ROUND;
+    weaponEmoji.textContent = WEAPONS[chosen].e;
+    weaponEl.style.display = 'none';
+    mom.x = arena.clientWidth/2; mom.y = arena.clientHeight/2;
+    mom.target = null; mom.retarget = 0; mom.cool = 0.4; mom.sayT = 0;
+    sayEl.classList.remove('on');
+    momEl.style.transform = 'translate('+mom.x+'px,'+mom.y+'px)';
+    overlay.style.display = 'none';
+    running = true;
+    for(var i=0;i<4;i++) spawn();
+    lastT = performance.now();
+    raf = requestAnimationFrame(frame);
+  }
+
+  function end(){
+    running = false;
+    cancelAnimationFrame(raf);
+    clearAll();
+    weaponEl.style.display = 'none';
+    sayEl.classList.remove('on');
+    var t, m;
+    if(score > momScore){
+      seriesYou++;
+      t = 'You beat Mom!';
+      m = 'Official ruling: you are now the family champion. Screenshot this.';
+    } else if(score < momScore){
+      seriesMom++;
+      t = 'Mom wins';
+      m = 'Of course she does. Decades of experience. Demand a rematch.';
+    } else {
+      t = 'A tie?!';
+      m = 'Even Mom looks suspicious about this. Go again.';
+    }
+    titleEl.textContent = t;
+    msgEl.innerHTML =
+      '<div class="vs"><div><div class="big">'+score+'</div><small>You</small></div>' +
+      '<div class="dash">:</div>' +
+      '<div><div class="big m">'+momScore+'</div><small>Mom</small></div></div><p>'+m+'</p>';
+    hintEl.textContent = ROOMS[roomIdx].n+' done. Series: You '+seriesYou+', Mom '+seriesMom+'. Change room or weapon above, or go again.';
+    goBtn.textContent = 'Play ' + ROOMS[roomIdx].n;
+    overlay.style.display = 'flex';
+  }
+
+  goBtn.addEventListener('click', start);
+})();
+</script>
+</body>
+</html>
